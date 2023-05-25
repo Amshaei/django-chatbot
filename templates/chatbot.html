@@ -11,7 +11,7 @@
       overflow-y: auto;
     }
 
-    .messages-list {
+    .message-list {
       padding-left: 0;
     }
 
@@ -70,15 +70,15 @@
     <div class="card-header bg-primary text-white">Chat</div>
     <div class="card-body messages-box">
       
-      <ul class="list-unstyled messages-list">
-        
-        <li class="message received">
+      <ul class="list-unstyled message-list">
+        <!-- Message class is 'sent' if it is sent by You -->
+        <!-- Message class is 'recieved' if it is sent by AI -->
+        <li class="message received"> 
           <div class="message-text">
             <div class="message-sender">
               <b>AI Chatbot</b>
             </div>
-            <div class="message-content">
-              Hi, I am your AI Chatbot, you can ask me anything.
+            <div class="message-content initial-prompt">
             </div>
           </div>
         </li>
@@ -99,6 +99,90 @@
     </div>
   </form>
 </div>
+
+<script>
+  
+
+
+  
+
+
+  let initialPrompt = "Hi, I am your AI Chatbot, you can ask me anything."
+
+  // Instantiate Element Selectors
+  const initialMessage = document.querySelector('.initial-prompt');
+  const messageList = document.querySelector('.message-list'); // ul element that holds all message elements
+  const messageForm = document.querySelector('.message-form'); // form element that holds csrf token and form
+  const messageInput = document.querySelector('.message-input'); // input element that holds input
+
+
+  let conversation_history = "Ai Chatbot: " + initialPrompt;
+
+  initialMessage.innerHTML = initialPrompt;
+
+  // On form submit
+  messageForm.addEventListener('submit', (event) => {
+    event.preventDefault(); // Prevent page from reloading
+
+    // Store input and trim spaces
+    const message = messageInput.value.trim();
+
+    // If nothing is inputted, do nothing
+    if (message.length === 0) {
+      return;
+    }
+
+    // Construct element
+    const messageItem = document.createElement('li');
+    messageItem.classList.add('message', 'sent');
+    messageItem.innerHTML = `
+      <div class="message-text">
+        <div class="message-sender">
+          <b>You</b>
+        </div>
+        <div class="message-content">
+          ${message}
+        </div>
+      </div>
+    `
+
+    // Add messageItem to messageList ul
+    messageList.appendChild(messageItem);
+
+    // Clear
+    messageInput.value = "";
+
+
+    // Fetch method with an empty endpoint, posting the csrfmiddleware token and message. 
+    fetch('', {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/x-www-form-urlencoded'},
+      body: new URLSearchParams({
+        'csrfmiddlewaretoken': document.querySelector('[name=csrfmiddlewaretoken]').value,
+        'message': message,
+      })
+    })
+    .then(response => response.json())
+    .then(data => {
+      const response = data.response;
+      const messageItem = document.createElement('li');
+      messageItem.classList.add('message', 'received');
+      messageItem.innerHTML = 
+      ` 
+        <div class="message-text">
+          <div class="message-sender">
+            <b>Ai Chatbot</b>
+          </div>
+          <div class="message-content">
+            ${response}
+          </div>
+        </div>
+      `
+      messageList.appendChild(messageItem)
+    })
+  });
+
+</script>
 
 
 {% endblock %}
